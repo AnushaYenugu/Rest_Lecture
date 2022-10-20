@@ -1,4 +1,4 @@
-package lexicon.spring.rest_lecture.model;
+package lexicon.spring.rest_lecture.model.entity;
 
 
 import lombok.*;
