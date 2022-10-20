@@ -1,58 +1,76 @@
 package lexicon.spring.rest_lecture.controller;
 
 
+import lexicon.spring.rest_lecture.exception.ResourceNotFoundException;
 import lexicon.spring.rest_lecture.model.entity.Role;
 import lexicon.spring.rest_lecture.model.dto.RoleForm;
 import lexicon.spring.rest_lecture.repository.RoleRepository;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 public class RoleController {
-    private RoleRepository roleRepository;
-
+    private final RoleRepository roleRepository;
+    private final ModelMapper modelMapper;
     @Autowired
-    public RoleController(RoleRepository roleRepository) {
+    public RoleController(RoleRepository roleRepository, ModelMapper modelMapper) {
         this.roleRepository = roleRepository;
+        this.modelMapper = modelMapper;
     }
+
+
     @GetMapping("/api/v1/role")
     public ResponseEntity<List<RoleForm>> findAll(){
 
         List<Role> roleList=roleRepository.findAll();
        // return ResponseEntity.status(HttpStatus.OK).body(roleList);
-        List<RoleForm> roleFormList=new ArrayList<>();
-        for(Role role: roleList){
+       // List<RoleForm> roleFormList=new ArrayList<>();
+        List<RoleForm> roleFormList=modelMapper.map(roleList
+                ,new TypeToken<List<RoleForm>>(){}.getType());
+     /*   for(Role role: roleList){
             roleFormList.add(new RoleForm(role.getId(),role.getName()));
         }
-        return ResponseEntity.ok(roleFormList);
+*/        return ResponseEntity.ok(roleFormList);
     }
     @GetMapping("api/v1/role/{id}")
     public ResponseEntity<RoleForm> findByRoleId(@PathVariable("id") Integer id){
         System.out.println(id);
-        Optional<Role> foundById=roleRepository.findById(id);
-        RoleForm roleForm=new RoleForm(foundById.get().getId(),foundById.get().getName());
+        if(id==null) throw new IllegalArgumentException("Id is null");
+        Role foundById=roleRepository.findById(id).orElseThrow(
+                ()->new ResourceNotFoundException("Role Data Not Found"));
+
+       // RoleForm roleForm=new RoleForm(foundById.get().getId(),foundById.get().getName());
+
+     //   RoleForm roleForm=modelMapper.map(foundById,RoleForm.class);
        /* if(foundById.isPresent()){
             return ResponseEntity.ok(foundById.get());
         }
         else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }*/
-        return ResponseEntity.ok(roleForm);
+       // return ResponseEntity.ok(roleForm);
+        //instead we can write i simpler way
+        return ResponseEntity.ok(modelMapper.map(foundById,RoleForm.class));
     }
 
     @GetMapping("api/v1/role/name")
     public ResponseEntity<RoleForm> findByRoleName(@RequestParam("name") String name){
         System.out.println(name);
-        Optional<Role> foundByName=roleRepository.findByName(name);
+        if(name==null) throw new IllegalArgumentException("Name was null");
+        Role foundByName=roleRepository.findByName(name).orElseThrow(
+                ()-> new ResourceNotFoundException("Role Data is not found"));
 
-        RoleForm roleFormByName=new RoleForm(foundByName.get().getId(),foundByName.get().getName());
-       /* if(foundByName.isPresent()){
+      //  RoleForm roleFormByName=new RoleForm(foundByName.get().getId(),foundByName.get().getName());
+       RoleForm roleFormByName=modelMapper.map(foundByName,RoleForm.class);
+
+        /* if(foundByName.isPresent()){
             return ResponseEntity.ok(foundByName.get());
         }
         else {
@@ -63,12 +81,14 @@ public class RoleController {
     }
 
     @PostMapping("api/v1/role")
-    public ResponseEntity<Role> create(@RequestBody RoleForm form ){
+    public ResponseEntity<RoleForm> create(@RequestBody RoleForm form ){
         System.out.println("Create ######Method");
         System.out.println("Role "+form);
-        Role role=new Role(form.getId(), form.getName());
+       // Role role=new Role(form.getId(), form.getName());
+        Role role=modelMapper.map(form,Role.class);
         Role savedRole=roleRepository.save(role);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedRole);
+        RoleForm roleForm=modelMapper.map(savedRole,RoleForm.class);
+        return ResponseEntity.status(HttpStatus.CREATED).body(roleForm);
     }
 
     @DeleteMapping("api/v1/role/{id}")
@@ -89,7 +109,8 @@ public class RoleController {
         System.out.println("Id: "+id);
         System.out.println("RoleForm "+roleForm);
         if(id== roleForm.getId()){
-            Role role=new Role(roleForm.getId(), roleForm.getName());
+          //  Role role=new Role(roleForm.getId(), roleForm.getName());
+            Role role=modelMapper.map(roleForm,Role.class);
             roleRepository.save(role);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }else {
