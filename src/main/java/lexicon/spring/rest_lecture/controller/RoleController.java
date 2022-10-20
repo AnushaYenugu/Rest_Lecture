@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,34 +22,44 @@ public class RoleController {
         this.roleRepository = roleRepository;
     }
     @GetMapping("/api/v1/role")
-    public ResponseEntity<List<Role>> findAll(){
+    public ResponseEntity<List<RoleForm>> findAll(){
 
         List<Role> roleList=roleRepository.findAll();
        // return ResponseEntity.status(HttpStatus.OK).body(roleList);
-        return ResponseEntity.ok(roleList);
+        List<RoleForm> roleFormList=new ArrayList<>();
+        for(Role role: roleList){
+            roleFormList.add(new RoleForm(role.getId(),role.getName()));
+        }
+        return ResponseEntity.ok(roleFormList);
     }
     @GetMapping("api/v1/role/{id}")
-    public ResponseEntity<Role> findByRoleId(@PathVariable("id") Integer id){
+    public ResponseEntity<RoleForm> findByRoleId(@PathVariable("id") Integer id){
         System.out.println(id);
         Optional<Role> foundById=roleRepository.findById(id);
-        if(foundById.isPresent()){
+        RoleForm roleForm=new RoleForm(foundById.get().getId(),foundById.get().getName());
+       /* if(foundById.isPresent()){
             return ResponseEntity.ok(foundById.get());
         }
         else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        }*/
+        return ResponseEntity.ok(roleForm);
     }
 
     @GetMapping("api/v1/role/name")
-    public ResponseEntity<Role> findByRoleName(@RequestParam("name") String name){
+    public ResponseEntity<RoleForm> findByRoleName(@RequestParam("name") String name){
         System.out.println(name);
         Optional<Role> foundByName=roleRepository.findByName(name);
-        if(foundByName.isPresent()){
+
+        RoleForm roleFormByName=new RoleForm(foundByName.get().getId(),foundByName.get().getName());
+       /* if(foundByName.isPresent()){
             return ResponseEntity.ok(foundByName.get());
         }
         else {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        }
+        }*/
+
+        return ResponseEntity.ok(roleFormByName);
     }
 
     @PostMapping("api/v1/role")
